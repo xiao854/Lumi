@@ -1,0 +1,411 @@
+<!doctype html>
+<html lang="zh-CN">
+  <head>
+    <meta charset="utf-8" />
+    <title>Lumi · 为开发者而生</title>
+    <link rel="icon" href="{{ url_for('static', filename='title-logo.jpg') }}?v=3" type="image/jpeg" />
+    <link rel="shortcut icon" href="{{ url_for('static', filename='title-logo.jpg') }}?v=3" type="image/jpeg" />
+    <meta name="viewport" content="width=device-width, initial-scale=1" />
+    <link rel="stylesheet" href="{{ url_for('static', filename='style.css') }}" />
+  </head>
+  <body>
+    <div class="splash">
+      <div class="splash-inner">
+        <img
+          src="{{ url_for('static', filename='lumi-logo.jpg') }}"
+          alt="Lumi Logo"
+          class="splash-logo"
+        />
+        <div class="splash-title">Lumi</div>
+        <div class="splash-subtitle">为开发者而生</div>
+      </div>
+      <div class="splash-credit">Powered by Black Sheep Studio(MoXiaoyun)</div>
+    </div>
+
+    <div class="app-root">
+      <nav class="left-sidebar" aria-label="主功能切换">
+        <div class="left-sidebar-brand">LUMI</div>
+        <button type="button" class="left-sidebar-item active" data-view="hardware" id="sidebar-hardware" title="让 Lumi 为你的硬件写代码">
+          <span class="left-sidebar-icon"></span>
+          <span class="left-sidebar-label">硬件烧录</span>
+        </button>
+        <button type="button" class="left-sidebar-item" data-view="ai-edit" id="sidebar-ai-edit" title="AI 结对编辑 · 代码补全/优化">
+          <span class="left-sidebar-icon"></span>
+          <span class="left-sidebar-label">AI编辑</span>
+        </button>
+        <button type="button" class="left-sidebar-item" data-view="toolbox" id="sidebar-toolbox" title="自动化工具箱">
+          <span class="left-sidebar-icon"></span>
+          <span class="left-sidebar-label">小工具箱</span>
+        </button>
+        <button type="button" class="left-sidebar-item" data-view="assistant" id="sidebar-assistant" title="电脑助手：润色、改代码、终端、TODO、Plan、深度思考">
+          <span class="left-sidebar-icon"></span>
+          <span class="left-sidebar-label">PC助手</span>
+        </button>
+        <button type="button" class="left-sidebar-item" data-view="create-agent" id="sidebar-create-agent" title="用自然语言创造自己的 Agent，文件夹与文件由 AI 决策">
+          <span class="left-sidebar-icon"></span>
+          <span class="left-sidebar-label">创造 Agent</span>
+        </button>
+        <button type="button" class="left-sidebar-item" data-view="dev" id="sidebar-dev" title="开发者调试">
+          <span class="left-sidebar-icon"></span>
+          <span class="left-sidebar-label">设置开发</span>
+        </button>
+      </nav>
+
+      <div class="app-content-wrap">
+        <main class="main main-center">
+          <div id="status-banner" class="status-banner status-loading">
+            <span class="status-dot"></span>
+            <span id="status-text">正在检测 Lumi 运行环境...</span>
+          </div>
+
+          <div id="content-view-hardware" class="content-view active">
+            <header class="hero">
+              <div class="hero-icon">
+                <img src="{{ url_for('static', filename='lumi-logo.jpg') }}" alt="Lumi" class="hero-icon-img" />
+              </div>
+              <div class="hero-title" id="hero-title-text">今天有什么可以帮到你？</div>
+            </header>
+            <div class="main-layout-row">
+              <aside class="side-col">
+                <div class="side-panel device-bar">
+                  <div class="device-bar-header">
+                    <span id="device-status-text">正在检测串口设备...</span>
+                    <button type="button" class="pill-button pill-outline device-refresh-btn" id="device-refresh" title="重新扫描串口">刷新</button>
+                  </div>
+                  <div id="device-list" class="device-list"></div>
+                  <div id="device-detail" class="device-detail"></div>
+                </div>
+              </aside>
+              <section class="panel main-view active" id="view-chat-main">
+                <div id="hardware-model-tag" class="model-tag">当前模型：加载中… · Lumi · MicroPython</div>
+                <div id="chat-window" class="chat-window">
+                  <div class="chat-placeholder">用 USB 连接设备 → 左侧选择串口 → 在此发送指令，Lumi 会生成代码并可一键烧录到设备。也可从 GitHub 拉取项目并部署。</div>
+                </div>
+                <div class="mode-switch">
+                  <button class="pill-button pill-outline mode-btn mode-btn-active" data-mode="micropython">MicroPython 模式</button>
+                  <button class="pill-button pill-outline mode-btn" data-mode="platformio">C++ / PlatformIO 模式</button>
+                  <div id="board-select-wrap" class="board-select-wrap hidden">
+                    <label for="board-select" class="board-select-label">开发板</label>
+                    <select id="board-select" class="board-select"><option value="">加载中…</option></select>
+                  </div>
+                  <label id="multi-file-wrap" class="multi-file-wrap" title="生成多文件项目（如 main.py + config.py + lib/）并全部上传到设备">
+                    <input type="checkbox" id="multi-file-checkbox" />
+                    <span>多文件项目</span>
+                  </label>
+                  <button type="button" class="pill-button pill-outline chat-clear-btn" id="chat-clear-btn" title="清空对话并恢复初始界面">清空对话</button>
+                </div>
+                <div class="chat-input-shell">
+                  <div class="quick-actions">
+                    <button class="quick-action" data-template="让接在 GPIO5(D1) 的舵机从 0° 转到 90°，停 2 秒，再回到 0°，循环执行。">舵机 90°</button>
+                    <button class="quick-action" data-template="连接 Wi-Fi 并每隔 10 秒读取一次 DHT11 温湿度并上报到指定 HTTP 接口。">Wi‑Fi 上报传感器</button>
+                    <button class="quick-action" data-template="为 ESP8266 生成一个基础四轴无人机飞控框架 main.py，包括四路电机 PWM 和占位的 RC/IMU 更新逻辑。">无人机飞控框架</button>
+                    <button class="quick-action" data-template="帮我从 GitHub 上下载完整飞控代码，并烧录到设备。">GitHub 搜索飞控并烧录</button>
+                  </div>
+                  <div class="chat-input-bar">
+                    <div class="chat-input-main">
+                      <textarea id="chat-input" class="input textarea chat-input" placeholder="给 Lumi 发送消息… Enter 发送，Shift+Enter 换行"></textarea>
+                    </div>
+                    <div class="chat-input-tools">
+                      <label class="pill-button"><input type="file" id="file-input" hidden />深度思考</label>
+                      <button class="pill-button pill-outline" id="btn-search-toggle">联网搜索</button>
+                      <div class="chat-input-actions">
+                        <span class="attach-icon">📎</span>
+                        <button class="stop-button" id="chat-stop" type="button" aria-label="停止生成">■</button>
+                        <button class="send-button" id="chat-send" type="button" aria-label="发送消息">↑</button>
+                      </div>
+                    </div>
+                  </div>
+                  <div id="flash-bar" class="flash-bar hidden">
+                    <span>是否将上一条指令生成的代码烧录到设备？</span>
+                    <div class="flash-bar-actions">
+                      <button class="btn primary btn-sm" id="flash-confirm">烧录到设备</button>
+                      <button type="button" class="pill-button pill-outline btn-sm" id="flash-dismiss" title="暂不烧录，仅保留对话与代码">暂不烧录</button>
+                    </div>
+                  </div>
+                </div>
+              </section>
+              <aside class="side-col">
+                <div class="side-panel process-bar">
+                  <div class="process-header">
+                    <span>模型进程（生成 / 烧录）</span>
+                    <div class="process-header-actions">
+                      <button type="button" class="pill-button pill-outline process-copy-btn" id="process-copy" title="复制到剪贴板">复制</button>
+                      <button type="button" class="pill-button pill-outline process-clear-btn" id="process-clear" title="清空日志">清空</button>
+                    </div>
+                  </div>
+                  <div class="progress-row">
+                    <div class="progress-track"><div id="progress-fill" class="progress-fill"></div></div>
+                    <div id="progress-text" class="progress-text">空闲</div>
+                  </div>
+                  <div class="process-log-wrap">
+                    <pre id="process-log" class="process-log">Lumi 等待你的第一个指令，用于生成或烧录代码...</pre>
+                    <button type="button" class="process-log-scroll-btn hidden" id="process-log-scroll-btn" title="回到底部">↓ 回到底部</button>
+                  </div>
+                </div>
+              </aside>
+            </div>
+          </div>
+
+          <div id="content-view-ai-edit" class="content-view">
+            <div class="content-view-inner panel">
+              <h2 class="content-view-title">AI 结对编辑 · 代码补全/优化</h2>
+              <div class="ai-edit-mode-switch">
+                <button type="button" class="pill-button pill-outline ai-edit-mode-btn active" data-mode="file-edit" id="ai-edit-mode-file">编辑本地文件</button>
+                <button type="button" class="pill-button pill-outline ai-edit-mode-btn" data-mode="code-action" id="ai-edit-mode-code">代码补全/优化</button>
+              </div>
+
+              <div id="ai-edit-pane-file" class="ai-edit-pane">
+                <div class="ai-edit-panel ai-edit-panel-standalone">
+                  <div id="ai-edit-body" class="ai-edit-body">
+                    <p class="ai-edit-hint">路径相对于项目根：<span id="ai-edit-project-root">~/Desktop</span></p>
+                    <label class="ai-edit-label">文件路径</label>
+                    <input type="text" id="ai-edit-path" class="ai-edit-input" placeholder="如 project/main.py 或 notes.md" />
+                    <label class="ai-edit-label">修改需求（自然语言）</label>
+                    <textarea id="ai-edit-instruction" class="ai-edit-textarea" rows="2" placeholder="如：在 main 函数开头增加参数校验；或：把这段逻辑抽成独立函数"></textarea>
+                    <label class="ai-edit-label">选中/焦点代码（可选，便于 AI 精准修改）</label>
+                    <textarea id="ai-edit-selected" class="ai-edit-textarea small" rows="2" placeholder="粘贴你选中的代码片段"></textarea>
+                    <label class="ai-edit-label">引用文件路径 @（可选，每行一个）</label>
+                    <textarea id="ai-edit-context-paths" class="ai-edit-textarea small" rows="1" placeholder="如 utils/helper.py"></textarea>
+                    <div class="ai-edit-actions">
+                      <button type="button" class="pill-button" id="ai-edit-preview">预览</button>
+                      <button type="button" class="pill-button pill-outline ai-edit-stop hidden" id="ai-edit-stop" title="停止生成">■ 停止</button>
+                      <button type="button" class="pill-button pill-outline" id="ai-edit-apply" disabled>应用</button>
+                    </div>
+                    <div id="ai-edit-result-wrap" class="ai-edit-result-wrap hidden">
+                      <div class="ai-edit-result-label">AI 生成的新内容</div>
+                      <pre id="ai-edit-result" class="ai-edit-result"></pre>
+                    </div>
+                  </div>
+                </div>
+              </div>
+
+              <div id="ai-edit-pane-code" class="ai-edit-pane hidden">
+                <div class="code-action-panel code-action-panel-standalone">
+                  <div id="code-action-body" class="code-action-body">
+                    <textarea id="code-action-input" class="code-action-input" placeholder="粘贴或输入待处理代码，也可点击「使用上一条代码」填入上次生成的内容" rows="6"></textarea>
+                    <div class="code-action-options">
+                      <label class="code-action-opt">
+                        <span class="code-action-opt-label">语言/平台（补全用，可选）</span>
+                        <input type="text" id="code-action-language" class="code-action-field" placeholder="如 MicroPython、C++ Arduino" />
+                      </label>
+                      <label class="code-action-opt">
+                        <span class="code-action-opt-label">优化说明（可选）</span>
+                        <input type="text" id="code-action-instruction" class="code-action-field" placeholder="如 减少内存、提高可读性" />
+                      </label>
+                    </div>
+                    <div class="code-action-buttons">
+                      <button type="button" class="pill-button pill-outline" id="code-action-fill-last">使用上一条代码</button>
+                      <button type="button" class="pill-button" id="code-action-complete">补全</button>
+                      <button type="button" class="pill-button" id="code-action-optimize">优化</button>
+                    </div>
+                    <div id="code-action-result-wrap" class="code-action-result-wrap hidden">
+                      <div class="code-action-result-label">结果预览</div>
+                      <pre id="code-action-result" class="code-action-result"></pre>
+                      <button type="button" class="pill-button pill-outline btn-sm" id="code-action-use-result">设为当前代码（可烧录）</button>
+                    </div>
+                  </div>
+                </div>
+              </div>
+            </div>
+          </div>
+
+          <div id="content-view-toolbox" class="content-view">
+            <div class="content-view-inner panel">
+              <h2 class="content-view-title"> 自动化工具箱</h2>
+              <p class="toolbox-view-hint">脚本执行结果将写入「硬件写代码」页的模型进程日志，可切换左侧栏查看。</p>
+              <div class="toolbox-search-wrap">
+                <input type="text" id="toolbox-search" class="toolbox-search-input input" placeholder="搜索工具名称、描述或分类…" aria-label="搜索工具箱" autocomplete="off" />
+              </div>
+              <div id="toolbox-list" class="toolbox-list toolbox-list-standalone"><div class="toolbox-loading">加载中…</div></div>
+            </div>
+          </div>
+
+          <div id="content-view-assistant" class="content-view">
+            <div class="assistant-view-layout">
+              <div class="content-view-inner panel assistant-panel">
+                <h2 class="content-view-title">电脑助手</h2>
+                <p class="assistant-desc">支持文本润色、修改/补全代码、执行终端命令、TODO 规划、Plan 模式、深度思考与自定义 Command；可完成下载视频、抠图、压缩/解压、写文案/脚本/PPT 等任务。</p>
+                <p class="assistant-mode-hint">根据你的描述自动选择模式（润色 / 改代码 / 补全 / 终端 / TODO / 计划 / 深度思考等），无需手动切换。</p>
+                <p class="assistant-operate-hint">让 Lumi 直接操作你的电脑：用自然语言描述要做的事（如「列出当前目录文件」「用 Python 跑一个脚本」），发送后 Lumi 会给出终端命令；若出现「执行命令」按钮，点击即可在本地执行该命令。</p>
+                <div class="assistant-layout">
+                  <div class="assistant-main">
+                    <div id="assistant-chat" class="assistant-chat">
+                      <div class="assistant-placeholder">描述你的任务即可，无需粘贴内容。例如：「帮我润色桌面上的xxx.docx」「修改项目根目录的 main.py 里的逻辑」——说出路径，助手会直接读文件并写回。</div>
+                    </div>
+                    <div class="assistant-progress-wrap hidden" id="assistant-progress-wrap" aria-hidden="true">
+                      <div class="assistant-progress-bar" id="assistant-progress-bar"></div>
+                    </div>
+                    <div class="assistant-thinking" id="assistant-thinking" aria-live="polite"></div>
+                    <div class="assistant-quick-tasks">
+                      <span class="assistant-quick-label">快捷任务：</span>
+                      <button type="button" class="pill-button pill-outline assistant-quick" data-task="下载视频到桌面">下载视频到桌面</button>
+                      <button type="button" class="pill-button pill-outline assistant-quick" data-task="抠图">抠图</button>
+                      <button type="button" class="pill-button pill-outline assistant-quick" data-task="压缩/解压文件">压缩/解压</button>
+                      <button type="button" class="pill-button pill-outline assistant-quick" data-task="写文案">写文案</button>
+                      <button type="button" class="pill-button pill-outline assistant-quick" data-task="写脚本">写脚本</button>
+                      <button type="button" class="pill-button pill-outline assistant-quick" data-task="做PPT">做 PPT</button>
+                    </div>
+                    <div class="assistant-input-bar">
+                      <label class="assistant-deep-think">
+                        <input type="checkbox" id="assistant-deep-think" />
+                        <span>深度思考</span>
+                      </label>
+                      <div class="assistant-input-wrap">
+                        <textarea id="assistant-input" class="input textarea assistant-input" placeholder="例如：帮我润色桌面上的报告.docx；或：修改桌面/script.py 里的 bug… Enter 发送" rows="2"></textarea>
+                        <button type="button" class="pill-button pill-outline assistant-run-cmd hidden" id="assistant-run-cmd" title="执行上一条助手返回的终端命令">执行命令</button>
+                        <button type="button" class="pill-button pill-outline assistant-stop hidden" id="assistant-stop" aria-label="停止生成" title="停止输出">■ 停止</button>
+                        <button type="button" class="send-button assistant-send" id="assistant-send" aria-label="发送">↑</button>
+                      </div>
+                    </div>
+                  </div>
+                </div>
+              </div>
+              <div class="assistant-resize-handle" id="assistant-resize-handle" role="separator" aria-label="拖拽调节宽度" title="拖拽调节左右区域宽度"></div>
+              <aside class="assistant-file-panel" id="assistant-file-panel" aria-label="文件改动预览">
+                <div class="assistant-file-panel-header">
+                  <span class="assistant-file-panel-title">文件改动</span>
+                  <button type="button" class="assistant-file-panel-close" id="assistant-file-panel-close" aria-label="关闭">×</button>
+                </div>
+                <div class="assistant-file-panel-toolbar hidden" id="assistant-file-panel-toolbar">
+                  <span class="assistant-file-panel-filename" id="assistant-file-panel-filename" title=""></span>
+                  <button type="button" class="assistant-file-panel-toolbar-close" id="assistant-file-panel-toolbar-close" aria-label="关闭当前文件">×</button>
+                </div>
+                <div class="assistant-file-panel-actions hidden" id="assistant-file-panel-actions">
+                  <button type="button" class="pill-button pill-outline assistant-file-open-btn" id="assistant-file-open-btn">打开文件</button>
+                  <button type="button" class="pill-button pill-outline assistant-file-create-btn" id="assistant-file-create-btn" title="在文件管理器中打开所在文件夹，便于创建或管理文件">创建文件</button>
+                </div>
+                <div class="assistant-file-panel-path" id="assistant-file-panel-path"></div>
+                <div class="assistant-file-panel-write-status hidden" id="assistant-file-panel-write-status"></div>
+                <div class="assistant-file-panel-mentioned hidden" id="assistant-file-panel-mentioned">
+                  <div class="assistant-file-panel-mentioned-title">对话中提到的文件</div>
+                  <ul class="assistant-file-panel-mentioned-list" id="assistant-file-panel-mentioned-list"></ul>
+                </div>
+                <div class="assistant-file-diff" id="assistant-file-diff"></div>
+                <div class="assistant-file-panel-empty" id="assistant-file-panel-empty">
+                  <div class="assistant-file-panel-empty-icon" aria-hidden="true"></div>
+                  <div class="assistant-file-panel-empty-title">暂无文件改动</div>
+                  <div class="assistant-file-panel-empty-desc">当助手修改了桌面或项目中的文件并写回后，此处会显示该文件的改动对比：<span class="diff-legend-del">红色</span> 为删除内容，<span class="diff-legend-add">绿色</span> 为新增内容。</div>
+                </div>
+              </aside>
+            </div>
+          </div>
+
+          <div id="content-view-create-agent" class="content-view">
+            <div class="create-agent-layout">
+              <div class="create-agent-main panel">
+                <h2 class="content-view-title">创造 Agent</h2>
+                <p class="create-agent-desc">用简单自然语言描述你想要的 Agent，首次创建请填写下方信息；目录与文件结构由 AI 自动决策生成。</p>
+                <div class="create-agent-form-card" id="create-agent-form-card">
+                  <div class="create-agent-form-title">Agent 信息（首次创建请填写）</div>
+                  <div class="create-agent-form-grid">
+                    <label class="create-agent-label">名称</label>
+                    <input type="text" id="create-agent-name" class="input create-agent-input" placeholder="例如：天气助手" />
+                    <label class="create-agent-label">版本号</label>
+                    <input type="text" id="create-agent-version" class="input create-agent-input" placeholder="例如：1.0.0" value="1.0.0" />
+                    <label class="create-agent-label">API 接口</label>
+                    <input type="text" id="create-agent-api" class="input create-agent-input" placeholder="例如：OpenAI 兼容 / 自定义 HTTP" />
+                    <label class="create-agent-label">源文件路径（项目目录）</label>
+                    <input type="text" id="create-agent-source-path" class="input create-agent-input" placeholder="例如：桌面/MyAgent 或留空由 AI 命名" />
+                    <label class="create-agent-label">代理功能</label>
+                    <input type="text" id="create-agent-capabilities" class="input create-agent-input" placeholder="例如：查天气、调用外部 API、本地执行脚本" />
+                  </div>
+                </div>
+                <div class="create-agent-input-section">
+                  <label class="create-agent-label" for="create-agent-instruction">用自然语言描述你要创造的 Agent</label>
+                  <textarea id="create-agent-instruction" class="input textarea create-agent-instruction" rows="3" placeholder="例如：帮我做一个能查天气的 agent，接收城市名返回天气；或：做一个能总结网页内容的 agent…"></textarea>
+                  <button type="button" class="pill-button create-agent-submit" id="create-agent-submit">创建 Agent</button>
+                </div>
+                <div class="create-agent-result hidden" id="create-agent-result">
+                  <div class="create-agent-result-title">创建过程与结果</div>
+                  <div id="create-agent-result-content" class="create-agent-result-content"></div>
+                </div>
+              </div>
+              <aside class="create-agent-dev-panel panel" id="create-agent-dev-panel">
+                <div class="create-agent-dev-title">开发区域 · Agent 信息</div>
+                <div class="create-agent-dev-empty" id="create-agent-dev-empty">创建 Agent 后此处将显示名称、版本、API、路径与功能。</div>
+                <dl class="create-agent-dev-list hidden" id="create-agent-dev-list">
+                  <dt>名称</dt>
+                  <dd id="create-agent-dev-name">—</dd>
+                  <dt>版本号</dt>
+                  <dd id="create-agent-dev-version">—</dd>
+                  <dt>API 接口</dt>
+                  <dd id="create-agent-dev-api">—</dd>
+                  <dt>源文件路径</dt>
+                  <dd id="create-agent-dev-source-path" class="create-agent-dev-path">—</dd>
+                  <dt>代理功能</dt>
+                  <dd id="create-agent-dev-capabilities">—</dd>
+                </dl>
+              </aside>
+            </div>
+          </div>
+
+          <div id="content-view-dev" class="content-view">
+            <div class="content-view-inner panel">
+              <h2 class="content-view-title">开发者调试</h2>
+              <p class="dev-agent-version">Lumi Agent 版本：<strong>{{ lumi_agent_version | default('v1.2602') }}</strong></p>
+              <div class="dev-panel">
+                <section class="dev-section dev-section-model">
+                  <h3 class="dev-section-title">当前模型接口</h3>
+                  <p id="dev-model-provider" class="dev-model-provider">加载中…</p>
+                  <p id="dev-model-name" class="dev-model-name secondary"></p>
+                </section>
+                <section class="dev-section dev-section-intro">
+                  <h3 class="dev-section-title">开发者介绍</h3>
+                  <div class="dev-intro-content">
+                    <p class="dev-intro-name">Black Sheep Studio（MoXiaoyun）</p>
+                    <p class="dev-intro-desc">Lumi · ZeroAssistent 由 Black Sheep Studio（MoXiaoyun） 开发，为开发者提供本地/在线物联网与AI编程能力。感谢使用(不喜勿喷)。</p>
+                    <p class="dev-intro-extra">开发者：墨小云 MoXiaoyu（我是一名初中生，花课余时间做的这个agent，如果您不喜欢这个agent，不喜勿喷）</p>
+                  </div>
+                </section>
+                <section class="dev-section">
+                  <h3 class="dev-section-title">环境检测</h3>
+                  <p class="dev-section-desc">检测 API Key、mpremote、模型连通性等运行环境。</p>
+                  <button type="button" class="pill-button" id="dev-check-env">检测运行环境</button>
+                  <pre id="dev-status-result" class="dev-status-result">点击「检测运行环境」查看结果</pre>
+                </section>
+                <section class="dev-section">
+                  <h3 class="dev-section-title">检查版本</h3>
+                  <p class="dev-section-desc">查看当前 Lumi 与运行环境版本信息。</p>
+                  <button type="button" class="pill-button pill-outline" id="dev-check-version">检查版本</button>
+                  <pre id="dev-version-result" class="dev-status-result">点击「检查版本」查看结果</pre>
+                </section>
+                <section class="dev-section">
+                  <h3 class="dev-section-title">服务协议</h3>
+                  <div id="dev-service-agreement" class="dev-agreement-text">
+                    使用 Lumi Agent 即表示您同意在本地或自建环境中合规使用本工具。本工具会调DeepSeek的模型API接口生成代码、可能访问串口与本地文件，请勿将密钥或敏感数据泄露给未授权方。详细条款请参阅项目文档与各 API 提供方协议。
+                  </div>
+                </section>
+                <section class="dev-section">
+                  <h3 class="dev-section-title">开发者认证</h3>
+                  <p class="dev-section-desc">认证仅在当前浏览时间内有效，关闭标签页后需重新认证。</p>
+                  <div id="dev-auth-form" class="dev-auth-row">
+                    <input type="password" id="dev-secret-input" class="dev-secret-input" placeholder="请输入开发者密钥" autocomplete="off" />
+                    <button type="button" class="pill-button" id="dev-auth-btn">认证</button>
+                  </div>
+                  <p id="dev-auth-success" class="dev-auth-success hidden">开发者墨小云MoXiaoyu欢迎回来！</p>
+                  <p id="dev-auth-hint" class="dev-auth-hint"></p>
+                </section>
+              </div>
+            </div>
+          </div>
+        </main>
+      </div>
+    </div>
+
+    <div id="toast-container" class="toast-container" aria-live="polite"></div>
+
+    <div id="app-preview-modal" class="app-preview-modal hidden" aria-modal="true" aria-label="网页应用预览" role="dialog">
+      <div class="app-preview-modal-backdrop"></div>
+      <div class="app-preview-modal-box">
+        <div class="app-preview-modal-header">
+          <span class="app-preview-modal-title">应用预览</span>
+          <button type="button" class="app-preview-modal-close" id="app-preview-modal-close" aria-label="关闭">×</button>
+        </div>
+        <iframe id="app-preview-iframe" class="app-preview-iframe" title="预览运行中的网页应用"></iframe>
+      </div>
+    </div>
+
+    <script src="{{ url_for('static', filename='main.js') }}"></script>
+  </body>
+</html>
+

@@ -1,0 +1,15 @@
+# Lumi 一键 Docker 部署
+# 用法：docker-compose up -d
+# 首次运行前请复制 .env.example 为 .env 并填写 DEEPSEEK_API_KEY 等（见 DEPLOY.md）
+
+services:
+  lumi:
+    build: .
+    ports:
+      - "8000:5000"
+    env_file:
+      - .env
+    environment:
+      - FLASK_HOST=0.0.0.0
+      - PORT=5000
+    restart: unless-stopped

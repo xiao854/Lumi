@@ -1,0 +1,24 @@
+# Nginx 示例：Lumi 公网域名反向代理
+# 使用前请将 lumi.你的域名.com 替换为你的实际域名
+# 放入 /etc/nginx/sites-available/lumi 后执行：
+#   sudo ln -sf /etc/nginx/sites-available/lumi /etc/nginx/sites-enabled/
+#   sudo nginx -t && sudo nginx -s reload
+# 再执行 sudo certbot --nginx -d lumi.你的域名.com 申请 HTTPS
+
+server {
+    listen 80;
+    server_name lumi.你的域名.com;
+    location / {
+        proxy_pass http://127.0.0.1:8000;
+        proxy_http_version 1.1;
+        proxy_set_header Host $host;
+        proxy_set_header X-Real-IP $remote_addr;
+        proxy_set_header X-Forwarded-For $proxy_add_x_forwarded_for;
+        proxy_set_header X-Forwarded-Proto $scheme;
+        proxy_buffering off;
+        chunked_transfer_encoding off;
+        proxy_read_timeout 300;
+        proxy_connect_timeout 300;
+        proxy_send_timeout 300;
+    }
+}

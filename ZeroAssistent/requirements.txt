@@ -1,0 +1,7 @@
+pyserial>=3.5
+requests>=2.31.0
+mpremote>=1.23.0
+flask>=3.0.0
+gunicorn>=21.0.0
+pdf2docx>=0.5.0
+python-pptx>=0.6.21
